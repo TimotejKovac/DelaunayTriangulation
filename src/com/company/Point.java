@@ -9,7 +9,8 @@ public class Point {
     public Point(float x, float y, float z) {
         this.x = x;
         this.y = y;
-        this.z = z;
+        this.z = 0;
+        //this.z = z;
     }
 
 
