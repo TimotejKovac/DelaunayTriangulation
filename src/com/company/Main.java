@@ -75,10 +75,10 @@ public class Main {
                 //if(count % 1000 == 0) {
                     System.out.println(percent + " %");
                 //}
-                if (count++ > 10000) {
+                if (count++ > 100000) {
                     //rTree.visualize(600, 600)
                       //      .save("mytree.png");
-                  //  break;
+                    break;
                 }
             }
         //}
