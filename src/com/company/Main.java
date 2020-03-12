@@ -29,7 +29,7 @@ public class Main {
 
 
         rTree = RTree.star().create();
-        reader = new LASReader(new File("GK_391_145.laz"));
+        reader = new LASReader(new File("GK_374_129.laz"));
         //reader = new LASReader(new File("GK_430_136.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
@@ -75,11 +75,11 @@ public class Main {
                 //if(count % 1000 == 0) {
                     System.out.println(percent + " %");
                 //}
-                if (count++ > 100000) {
+                //if (count++ > 1000000) {
                     //rTree.visualize(600, 600)
                       //      .save("mytree.png");
-                    break;
-                }
+                //    break;
+                //}
             }
         //}
 
