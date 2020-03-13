@@ -6,6 +6,12 @@ public class Point {
 
     public float x, y, z;
 
+    public Point(Point p) {
+        this.x = p.x;
+        this.y = p.y;
+        this.z = p.z;
+    }
+
     public Point(float x, float y, float z) {
         this.x = x;
         this.y = y;
@@ -21,8 +27,7 @@ public class Point {
         if (o == null || getClass() != o.getClass()) return false;
         Point point = (Point) o;
         return x == point.x &&
-                y == point.y &&
-                z == point.z;
+                y == point.y;
     }
 
     @Override

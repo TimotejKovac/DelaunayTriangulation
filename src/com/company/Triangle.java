@@ -18,7 +18,12 @@ public class Triangle {
 
     private ArrayList<Triangle> neighbours;
 
-    public Triangle() {
+    public Triangle() {}
+
+    public Triangle(Point A, Point B, Point C) {
+        this.A = new Point(A);
+        this.B = new Point(B);
+        this.C = new Point(C);
     }
 
 
@@ -112,9 +117,7 @@ public class Triangle {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Triangle triangle = (Triangle) o;
-        return Objects.equals(A, triangle.A) &&
-                Objects.equals(B, triangle.B) &&
-                Objects.equals(C, triangle.C);
+        return getConnected(triangle).size() == 3;
     }
 
     @Override
