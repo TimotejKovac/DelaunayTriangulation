@@ -14,8 +14,6 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import java.awt.*;
-import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -31,8 +29,8 @@ public class Main {
 
 
         rTree = RTree.star().create();
-       // reader = new LASReader(new File("GK_430_136.laz"));
-        reader = new LASReader(new File("GK_391_145.laz"));
+        reader = new LASReader(new File("GK_374_129.laz"));
+        //reader = new LASReader(new File("GK_430_136.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
         rTree = rTree.add(startingTriangle, startingTriangle.getBounds());
@@ -61,45 +59,33 @@ public class Main {
         int count = 0;
 
 
-        System.out.println("O: " + reader.getHeader().getXOffset() + " " + reader.getHeader().getYOffset() + " " + reader.getHeader().getZOffset());
-        System.out.println("S: " + reader.getHeader().getXScaleFactor() + " " + reader.getHeader().getYScaleFactor() + " " + reader.getHeader().getZScaleFactor());
-
-
-        //while (pointReal.size() > 0) {
-            //LASPoint lasPoint = pointReal.remove(random.nextInt(pointReal.size()));
         for (LASPoint lasPoint : reader.getPoints()) {
-
-            /*Point P = new Point((float)(lasPoint.getX() * reader.getHeader().getXScaleFactor()),
-                    (float)(lasPoint.getY() * reader.getHeader().getYScaleFactor()),
-                    (float)(lasPoint.getZ() * reader.getHeader().getZScaleFactor()));*/
-            Point P = new Point((lasPoint.getX()),
-                    (lasPoint.getY()),
-                    (lasPoint.getZ()));
+                //for(Point point : points) {
+                //Point P = new Point(point.x, point.y, point.z);
+                Point P = new Point((int) (lasPoint.getX() * reader.getHeader().getXScaleFactor()),
+                        (int) (lasPoint.getY() * reader.getHeader().getYScaleFactor()),
+                        (int) (lasPoint.getZ() * reader.getHeader().getZScaleFactor()));
 
             //System.out.println("P = " + P.toString());
 
-            getTriangle(P);
+            //System.out.println("triangle = " + triangle);
+                getTriangle(P);
 
-            float percent = (count++ / (float) size) * 100;
-            //if(count % 1000 == 0) {
-                System.out.println(percent + " %");
-            //}
-            //if (count > 1000000 || percent > 5.031) {
-                //rTree.visualize(600, 600)
-                  //      .save("mytree.png");
-              //  break;
-            //}
-        }
+                float percent = (count++ / (float) size) * 100;
+                //if(count % 1000 == 0) {
+                    System.out.println(percent + " %");
+                //}
+                //if (count++ > 1000000) {
+                    //rTree.visualize(600, 600)
+                      //      .save("mytree.png");
+                //    break;
+                //}
+            }
+        //}
 
-        write("test.obj", true);
-        write("test_zero.obj", false);
 
-        //System.out.println("Done " + triangles.size());
-    }
-
-    private static void write(String filename, boolean addZ) {
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+                new FileOutputStream("test.obj"), StandardCharsets.UTF_8))) {
 
             ArrayList<Triangle> saving = new ArrayList<>();
             Triangle starting = getStartingTriangle();
@@ -115,10 +101,9 @@ public class Main {
 
 
             for (Triangle triangle : saving) {
-                writer.write("v " + triangle.getA().x + " " + triangle.getA().y + " " + (addZ ? triangle.getA().z : 0) + "\n");
-                writer.write("v " + triangle.getB().x + " " + triangle.getB().y + " " + (addZ ? triangle.getB().z : 0) + "\n");
-                writer.write("v " + triangle.getC().x + " " + triangle.getC().y + " " + (addZ ? triangle.getC().z : 0) + "\n");
-
+                writer.write("v " + triangle.getA().x + " " + triangle.getA().y + " " + triangle.getA().z + "\n");
+                writer.write("v " + triangle.getB().x + " " + triangle.getB().y + " " + triangle.getB().z + "\n");
+                writer.write("v " + triangle.getC().x + " " + triangle.getC().y + " " + triangle.getC().z + "\n");
             }
             for(int i = 1; i < saving.size() * 3; i+=3) {
                 writer.write("f " + i + " " + (i + 1) + " " + (i + 2) + "\n");
@@ -127,6 +112,8 @@ public class Main {
         catch (Exception e) {
             e.printStackTrace();
         }
+
+        //System.out.println("Done " + triangles.size());
     }
 
     private static void getTriangle(Point P) throws Exception {
@@ -134,77 +121,56 @@ public class Main {
         //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.point(P.x, P.y),1,10));
         //System.out.println("entries = " + entries.size());
         boolean t1Added = false, t2Added = false, t3Added = false;
-
-        for (Entry<Triangle, Geometry> entry : entries) {
+        for(Entry<Triangle, Geometry> entry : entries) {
 
             Triangle triangle = entry.value();
             if (triangle.has(P)) {
 
-                if (triangle.contains(P)) {
-                    //System.out.println("OHNO!");
-                    return;
-                }
-
-
-                /*if (P.equals(new Point(39153335, 14504901, 0))) {
-                    System.out.println(P.toString());
-                    System.out.println(triangle.toString());
-                    throw new Exception("HERE");
-                }*/
-
-
                 int result = 0;
                 Triangle t1 = new Triangle();
                 result = t1.set(triangle.getA(), P, triangle.getB());
-                if (result == 0) {
+                if(result == 0) {
                     rTree = rTree.add(t1, t1.getBounds());
                     t1Added = true;
                 }
 
                 Triangle t2 = new Triangle();
                 result = t2.set(triangle.getB(), P, triangle.getC());
-                if (result == 0) {
+                if(result == 0) {
                     rTree = rTree.add(t2, t2.getBounds());
                     t2Added = true;
                 }
 
                 Triangle t3 = new Triangle();
                 result = t3.set(triangle.getC(), P, triangle.getA());
-                if (result == 0) {
+                if(result == 0) {
                     rTree = rTree.add(t3, t3.getBounds());
                     t3Added = true;
+
                 }
 
                 rTree = rTree.delete(triangle, triangle.getBounds());
 
-
-                if (t1Added) {
+                if(t1Added)
                     legalizeEdge(P, triangle.getA(), triangle.getB(), t1);
-
-                }
-                if (t2Added) {
+                if(t2Added)
                     legalizeEdge(P, triangle.getB(), triangle.getC(), t2);
-
-                }
-                if (t3Added) {
+                if(t3Added)
                     legalizeEdge(P, triangle.getC(), triangle.getA(), t3);
-
-                }
 
                 return;
 
             }
         }
-
     }
 
-    private static Triangle getStartingTriangle() throws Exception{
-        double width = ((reader.getHeader().getMaxX() - reader.getHeader().getMinX())) * (1 / reader.getHeader().getXScaleFactor());
-        double height = ((reader.getHeader().getMaxY() - reader.getHeader().getMinY()) * (1 / reader.getHeader().getYScaleFactor()));
+    private static Triangle getStartingTriangle() {
+        int width = (int) ((reader.getHeader().getMaxX() - reader.getHeader().getMinX()));
+        int height = (int) ((reader.getHeader().getMaxY() - reader.getHeader().getMinY()));
 
         Rectangle rectangle = new Rectangle();
-        rectangle.setRect(reader.getHeader().getMinX() * (1 / reader.getHeader().getXScaleFactor()),
-                (reader.getHeader().getMinY() * (1 / reader.getHeader().getYScaleFactor())),
+        rectangle.setBounds((int)(reader.getHeader().getMinX()),
+                (int)(reader.getHeader().getMinY()),
                 width,
                 height);
         //rectangle.setBounds(0, 0, 1920, 1080);
@@ -215,34 +181,55 @@ public class Main {
                 new Point((int)(rectangle.getCenterX() + rectangle.getWidth()), (int)(rectangle.getY()), 0),
                 new Point((int)rectangle.getCenterX(), (int)(rectangle.getY() + 2 * rectangle.getHeight()),0));
 
-        System.out.println("start = " + result.toString());
         return result;
     }
 
-    private static Triangle getAdjacent(Point p1, Point p2, Triangle not) {
-        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p1.x, p1.y)));
+    private static Triangle getAdjacent2(Point p1, Point p2, Triangle not) {
+        /*Polygon polygon = new Polygon();
+        polygon.addPoint(p1.x, p1.y);
+        polygon.addPoint(p2.x, p2.y);
+        Rectangle rectangle = polygon.getBounds();*/
+        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.entries());
+        //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.point(p1.x, p1.y),100, 10));
+        //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.rectangle(rectangle.x ,rectangle.y, rectangle.x + rectangle.width, rectangle.y + rectangle.height),1, 10));
+        System.out.println("getAdjacent2: size = " + entries.size());
         for(Entry<Triangle, Geometry> entry : entries) {
             Triangle triangle = entry.value();
-            if(triangle.contains(p1) && triangle.contains(p2) && !triangle.equals(not))
+            //System.out.println("getAdjacent: triangle = " + (triangle.contains(p1)) + " " + (triangle.contains(p2)) + " " + !triangle.equals(not));
+            if(triangle.contains(p1) && triangle.contains(p2) && triangle.getConnected(not).size() == 2)
                 return triangle;
         }
         return null;
     }
 
-    static HashSet<String> logs = new HashSet<>();
+    private static Triangle getAdjacent(Point p1, Point p2, Triangle not) {
+        /*Polygon polygon = new Polygon();
+        polygon.addPoint(p1.x, p1.y);
+        polygon.addPoint(p2.x, p2.y);
+        Rectangle rectangle = polygon.getBounds();*/
+        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x, p2.y)));
+        //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.point(p1.x, p1.y),100, 10));
+        //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.rectangle(rectangle.x ,rectangle.y, rectangle.x + rectangle.width, rectangle.y + rectangle.height),1, 10));
+        //System.out.println("getAdjacent: size = " + entries.size());
+        for(Entry<Triangle, Geometry> entry : entries) {
+            Triangle triangle = entry.value();
+            //System.out.println("getAdjacent: triangle = " + (triangle.contains(p1)) + " " + (triangle.contains(p2)) + " " + !triangle.equals(not));
+            if(triangle.contains(p1) && triangle.contains(p2) && triangle.getConnected(not).size() == 2)
+                return triangle;
+        }
+        return null;
+    }
 
     private static void legalizeEdge(Point P, Point Pi, Point Pj, Triangle t) throws Exception {
 
         Triangle adjacent = getAdjacent(Pi, Pj, t);
         if(adjacent == null) {
+
+            //if(getAdjacent2(Pi, Pj, t) != null)
+                //throw new Exception("ERROR!");
             return;
         }
 
-
-        //System.out.println("T = " + t.toString());
-        //System.out.println("A = " + adjacent.toString());
-
-        //System.out.println("orientation = " + orientation(t.getA(), t.getB(), t.getC()));
         if(isIllegal(t, adjacent.notIn(t))) {
             change(adjacent, t, P);
 
@@ -250,21 +237,17 @@ public class Main {
             connected.remove(P);
             Point Pl = connected.get(0);
 
-
             if(t.contains(Pi) && t.contains(Pl)) {
                 legalizeEdge(P, Pi, Pl, t);
                 legalizeEdge(P, Pl, Pj, adjacent);
             }
-            else if(adjacent.contains(Pi) && adjacent.contains(Pl)){
+            else if(adjacent.contains(Pi) && adjacent.contains(Pl)) {
                 legalizeEdge(P, Pi, Pl, adjacent);
                 legalizeEdge(P, Pl, Pj, t);
             }
-            else  {
-                throw new Exception("ERR");
-            }
-
+            else
+                throw new Exception("THIS");
         }
-
     }
 
     // https://www.geeksforgeeks.org/orientation-3-ordered-points/
@@ -277,19 +260,10 @@ public class Main {
     public static int orientation(Point p1, Point p2, Point p3) {
         // See 10th slides from following link
         // for derivation of the formula
-        int val = (p2.y - p1.y) * (p3.x - p2.x) -
+        float val = (p2.y - p1.y) * (p3.x - p2.x) -
                 (p2.x - p1.x) * (p3.y - p2.y);
 
-
-
-        if (val == 0) {
-            System.out.println("COLINEAR!");
-            return 0;  // colinear
-        }
-
-        if(Math.abs(val) < 0.001) {
-            System.out.println("val = " + val);
-        }
+        if (val == 0) return 0;  // colinear
 
         // clock or counterclock wise
         return (val > 0)? 1: 2;
@@ -311,8 +285,8 @@ public class Main {
         rTree = rTree.delete(adjacent, adjacent.getBounds());
 
 
-        int result = t.set(one, connected.get(0), two);
-        int result2 = adjacent.set(one, connected.get(1), two);
+        t.set(one, connected.get(0), two);
+        adjacent.set(one, connected.get(1), two);
 
 
         /*if(t.getConnected(adjacent).size() != 2)

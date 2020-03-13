@@ -4,11 +4,12 @@ import java.util.Objects;
 
 public class Point {
 
-    public int x, y, z;
+    public float x, y, z;
 
-    public Point(int x, int y, int z) {
+    public Point(float x, float y, float z) {
         this.x = x;
         this.y = y;
+        //this.z = 0;
         this.z = z;
     }
 
@@ -19,7 +20,9 @@ public class Point {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Point point = (Point) o;
-        return x == point.x && y == point.y;
+        return x == point.x &&
+                y == point.y &&
+                z == point.z;
     }
 
     @Override
