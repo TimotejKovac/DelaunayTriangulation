@@ -3,6 +3,7 @@ package com.company;
 
 
 import com.github.davidmoten.rtree2.geometry.Geometries;
+import javafx.scene.shape.Path;
 
 import java.awt.*;
 import java.awt.geom.Path2D;
@@ -13,10 +14,8 @@ import static com.company.Main.orientation;
 
 public class Triangle {
     private Point A, B, C;
-    private Path2D polygon;
+    private Polygon polygon;
     Rectangle bounds;
-
-    private ArrayList<Triangle> neighbours;
 
     public Triangle() {
     }
@@ -56,6 +55,7 @@ public class Triangle {
         return null;
     }
 
+
     public com.github.davidmoten.rtree2.geometry.Rectangle getBounds() {
         return Geometries.rectangle(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
         //return Geometries.point(bounds.getCenterX(), bounds.getCenterY());
@@ -65,7 +65,7 @@ public class Triangle {
         return polygon.contains(P.x, P.y);
     }
 
-    public int set(Point A, Point B, Point C) {
+    public int set(Point A, Point B, Point C) throws Exception {
 
         int orientation = orientation(A, B, C);
         if (orientation == 0)
@@ -81,12 +81,10 @@ public class Triangle {
         this.B = B;
         this.C = C;
 
-        polygon = new Path2D.Float();
-        polygon.moveTo(A.x, A.y);
-        polygon.lineTo(B.x, B.y);
-        polygon.lineTo(C.x, C.y);
-        polygon.lineTo(A.x, A.y);
-        polygon.closePath();
+        polygon = new Polygon();
+        polygon.addPoint(A.x, A.y);
+        polygon.addPoint(B.x, B.y);
+        polygon.addPoint(C.x, C.y);
         bounds = polygon.getBounds();
 
         return 0;
@@ -125,9 +123,9 @@ public class Triangle {
     @Override
     public String toString() {
         return "Triangle{" +
-                "A=" + A.x + "," + A.y +
-                ", B=" + B.x + "," + B.y +
-                ", C=" + C.x + "," + C.y +
+                "A=" + A.x + "," + A.y + "," + A.z +
+                ", B=" + B.x + "," + B.y + "," + A.z +
+                ", C=" + C.x + "," + C.y + "," + A.z +
                 '}';
     }
 }
