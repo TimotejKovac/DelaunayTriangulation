@@ -13,10 +13,7 @@ import static com.company.Main.orientation;
 
 public class Triangle {
     private Point A, B, C;
-    private Path2D polygon;
-    Rectangle bounds;
-
-    private ArrayList<Triangle> neighbours;
+    Path2D.Float polygon;
 
     public Triangle() {}
 
@@ -52,6 +49,7 @@ public class Triangle {
     }
 
     public com.github.davidmoten.rtree2.geometry.Rectangle getBounds() {
+        Rectangle bounds = polygon.getBounds();
         return Geometries.rectangle(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
         //return Geometries.point(bounds.getCenterX(), bounds.getCenterY());
     }
@@ -82,7 +80,6 @@ public class Triangle {
         polygon.lineTo(C.x, C.y);
         polygon.lineTo(A.x, A.y);
         polygon.closePath();
-        bounds = polygon.getBounds();
 
         return 0;
     }

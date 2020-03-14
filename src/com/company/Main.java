@@ -30,8 +30,8 @@ public class Main {
 
         rTree = RTree.star().create();
         //reader = new LASReader(new File("GK_374_129.laz"));
-        //reader = new LASReader(new File("GK_430_136.laz"));
-        reader = new LASReader(new File("GK_391_145.laz"));
+        reader = new LASReader(new File("GK_430_136.laz"));
+        //reader = new LASReader(new File("GK_391_145.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
         rTree = rTree.add(startingTriangle, startingTriangle.getBounds());
@@ -218,6 +218,7 @@ public class Main {
             ArrayList<Point> connected = adjacent.getConnected(t);
             connected.remove(P);
             Pl = connected.get(0);
+            connected = null;
 
             legalizeEdge(P, Pi, Pl, t);
             legalizeEdge(P, Pl, Pj, adjacent);
