@@ -30,12 +30,12 @@ public class Main {
 
         rTree = RTree.star().create();
         //reader = new LASReader(new File("GK_374_129.laz"));
-        //reader = new LASReader(new File("GK_430_136.laz"));
-        reader = new LASReader(new File("GK_391_145.laz"));
+        reader = new LASReader(new File("GK_430_136.laz"));
+        //reader = new LASReader(new File("GK_391_145.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
         rTree = rTree.add(startingTriangle, startingTriangle.getBounds());
-        triangles.add(new Triangle(startingTriangle.getA(), startingTriangle.getB(), startingTriangle.getC()));
+        //triangles.add(new Triangle(startingTriangle.getA(), startingTriangle.getB(), startingTriangle.getC()));
 
 
         int size = reader.getHeader().getLegacyNumberOfPointRecords();
@@ -70,11 +70,11 @@ public class Main {
                 //if(count % 1000 == 0) {
                     System.out.println(percent + " %");
                 //}
-                if (count > 100000) {
+                /*if (count > 100000) {
                     //rTree.visualize(600, 600)
                       //      .save("mytree.png");
                     break;
-                }
+                }*/
             }
         //}
 
@@ -135,7 +135,7 @@ public class Main {
             result = t1.set(triangle.getA(), P, triangle.getB());
             if(result == 0) {
                 rTree = rTree.add(t1, t1.getBounds());
-                triangles.add(new Triangle(t1.getA(), t1.getB(), t1.getC()));
+                //triangles.add(new Triangle(t1.getA(), t1.getB(), t1.getC()));
                 t1Added = true;
             }
 
@@ -144,7 +144,7 @@ public class Main {
             result = t2.set(triangle.getB(), P, triangle.getC());
             if(result == 0) {
                 rTree = rTree.add(t2, t2.getBounds());
-                triangles.add(new Triangle(t2.getA(), t2.getB(), t2.getC()));
+                //triangles.add(new Triangle(t2.getA(), t2.getB(), t2.getC()));
                 t2Added = true;
             }
 
@@ -152,13 +152,13 @@ public class Main {
             result = t3.set(triangle.getC(), P, triangle.getA());
             if(result == 0) {
                 rTree = rTree.add(t3, t3.getBounds());
-                triangles.add(new Triangle(t3.getA(), t3.getB(), t3.getC()));
+                //triangles.add(new Triangle(t3.getA(), t3.getB(), t3.getC()));
                 t3Added = true;
 
             }
 
             rTree = rTree.delete(triangle, triangle.getBounds());
-            triangles.remove(new Triangle(triangle.getA(), triangle.getB(), triangle.getC()));
+            //triangles.remove(new Triangle(triangle.getA(), triangle.getB(), triangle.getC()));
 
             if(t1Added)
                 legalizeEdge(P, triangle.getA(), triangle.getB(), t1);
@@ -274,8 +274,8 @@ public class Main {
         Point two = t.notIn(adjacent);
         Point one = adjacent.notIn(t);
 
-        triangles.remove(new Triangle(t.getA(), t.getB(), t.getC()));
-        triangles.remove(new Triangle(adjacent.getA(), adjacent.getB(), adjacent.getC()));
+        //triangles.remove(new Triangle(t.getA(), t.getB(), t.getC()));
+        //triangles.remove(new Triangle(adjacent.getA(), adjacent.getB(), adjacent.getC()));
 
         rTree = rTree.delete(t, t.getBounds());
         rTree = rTree.delete(adjacent, adjacent.getBounds());
@@ -285,9 +285,9 @@ public class Main {
         adjacent.set(one, connected.get(1), two);
 
 
-        if(triangles.contains(t) || triangles.contains(adjacent)) {
+        /*if(triangles.contains(t) || triangles.contains(adjacent)) {
             throw new Exception("JFIOSAJDO");
-        }
+        }*/
 
 
         /*if(t.getConnected(adjacent).size() != 2)
