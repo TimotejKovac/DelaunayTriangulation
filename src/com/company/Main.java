@@ -30,8 +30,8 @@ public class Main {
 
         rTree = RTree.star().create();
         //reader = new LASReader(new File("GK_374_129.laz"));
-        reader = new LASReader(new File("GK_430_136.laz"));
-        //reader = new LASReader(new File("GK_391_145.laz"));
+        //reader = new LASReader(new File("GK_430_136.laz"));
+        reader = new LASReader(new File("GK_391_145.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
         rTree = rTree.add(startingTriangle, startingTriangle.getBounds());
@@ -53,9 +53,9 @@ public class Main {
         //for (LASPoint lasPoint : reader.getPoints()) {
                 //for(Point point : points) {
                 //Point P = new Point(point.x, point.y, point.z);
-                /*Point P = new Point((int) (lasPoint.getX() * reader.getHeader().getXScaleFactor()),
-                        (int) (lasPoint.getY() * reader.getHeader().getYScaleFactor()),
-                        (int) (lasPoint.getZ() * reader.getHeader().getZScaleFactor()));*/
+          /*      Point P = new Point(lasPoint.getX(),
+                        lasPoint.getY(),
+                        lasPoint.getZ());*/
                 Point P = realPoints.remove(random.nextInt(realPoints.size()));
 
             //System.out.println("P = " + P.toString());
@@ -135,7 +135,7 @@ public class Main {
             result = t1.set(triangle.getA(), P, triangle.getB());
             if(result == 0) {
                 rTree = rTree.add(t1, t1.getBounds());
-                //triangles.add(new Triangle(t1.getA(), t1.getB(), t1.getC()));
+               // triangles.add(new Triangle(t1.getA(), t1.getB(), t1.getC()));
                 t1Added = true;
             }
 
@@ -152,7 +152,7 @@ public class Main {
             result = t3.set(triangle.getC(), P, triangle.getA());
             if(result == 0) {
                 rTree = rTree.add(t3, t3.getBounds());
-                //triangles.add(new Triangle(t3.getA(), t3.getB(), t3.getC()));
+              //  triangles.add(new Triangle(t3.getA(), t3.getB(), t3.getC()));
                 t3Added = true;
 
             }
@@ -194,21 +194,11 @@ public class Main {
     }
 
 
-    private static Triangle getAdjacent(Point p1, Point p2, Triangle not) {
-        /*Polygon polygon = new Polygon();
-        polygon.addPoint(p1.x, p1.y);
-        polygon.addPoint(p2.x, p2.y);
-        Rectangle rectangle = polygon.getBounds();*/
+    private static Triangle getAdjacent(Point p1, Point p2, Point not) {
         List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x, p2.y)));
-        //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.point(p1.x, p1.y),100, 10));
-        //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.rectangle(rectangle.x ,rectangle.y, rectangle.x + rectangle.width, rectangle.y + rectangle.height),1, 10));
-        //System.out.println("getAdjacent: size = " + entries.size());
         for(Entry<Triangle, Geometry> entry : entries) {
             Triangle triangle = entry.value();
-            //System.out.println("getAdjacent: triangle = " + (triangle.contains(p1)) + " " + (triangle.contains(p2)) + " " + !triangle.equals(not));
-
-            // WAS: getConnected(not).size() == 2
-            if(triangle.contains(p1) && triangle.contains(p2) && !triangle.equals(not))
+            if(triangle.contains(p1) && triangle.contains(p2) && !triangle.contains(not))
                 return triangle;
         }
         return null;
@@ -216,31 +206,21 @@ public class Main {
 
     private static void legalizeEdge(Point P, Point Pi, Point Pj, Triangle t) throws Exception {
 
-        Triangle adjacent = getAdjacent(Pi, Pj, t);
+        Triangle adjacent = getAdjacent(Pi, Pj, P);
         if(adjacent == null) {
-
-            //if(getAdjacent2(Pi, Pj, t) != null)
-                //throw new Exception("ERROR!");
             return;
         }
 
-        if(isIllegal(t, adjacent.notIn(t))) {
-            change(adjacent, t, P);
+        Point Pl = adjacent.notIn(t);
+        if(isIllegal(t, Pl)) {
+            change(adjacent, t, P, Pi, Pj, Pl);
 
             ArrayList<Point> connected = adjacent.getConnected(t);
             connected.remove(P);
-            Point Pl = connected.get(0);
+            Pl = connected.get(0);
 
-            if(t.contains(Pi) && t.contains(Pl)) {
-                legalizeEdge(P, Pi, Pl, t);
-                legalizeEdge(P, Pl, Pj, adjacent);
-            }
-            else if(adjacent.contains(Pi) && adjacent.contains(Pl)) {
-                legalizeEdge(P, Pi, Pl, adjacent);
-                legalizeEdge(P, Pl, Pj, t);
-            }
-            else
-                throw new Exception("THIS");
+            legalizeEdge(P, Pi, Pl, t);
+            legalizeEdge(P, Pl, Pj, adjacent);
         }
     }
 
@@ -263,16 +243,7 @@ public class Main {
         return (val > 0)? 1: 2;
     }
 
-    private static void change(Triangle adjacent, Triangle t, Point P) throws Exception {
-        //System.out.println(adjacent.toString());
-        //System.out.println(t.toString());
-
-        //System.out.println(deleted.contains(adjacent) || deleted.contains(t));
-
-        ArrayList<Point> connected = t.getConnected(adjacent);
-
-        Point two = t.notIn(adjacent);
-        Point one = adjacent.notIn(t);
+    private static void change(Triangle adjacent, Triangle t, Point  P, Point Pi, Point Pj, Point Pl) throws Exception {
 
         //triangles.remove(new Triangle(t.getA(), t.getB(), t.getC()));
         //triangles.remove(new Triangle(adjacent.getA(), adjacent.getB(), adjacent.getC()));
@@ -280,32 +251,22 @@ public class Main {
         rTree = rTree.delete(t, t.getBounds());
         rTree = rTree.delete(adjacent, adjacent.getBounds());
 
+        t.set(Pl, Pi, P);
+        adjacent.set(Pl, Pj, P);
 
-        t.set(one, connected.get(0), two);
-        adjacent.set(one, connected.get(1), two);
-
-
-        /*if(triangles.contains(t) || triangles.contains(adjacent)) {
+/*        if(triangles.contains(t) || triangles.contains(adjacent)) {
             throw new Exception("JFIOSAJDO");
-        }*/
-
-
-        /*if(t.getConnected(adjacent).size() != 2)
-            throw new Exception("SHIT");
-
-        if(orientation(t.getA(), t.getB(), t.getC()) == 0) {
-            System.out.println(t.toString());
-            throw new Exception("COUNTER CLOCKWISE!");
         }
-        if(orientation(adjacent.getA(), adjacent.getB(), adjacent.getC()) == 0) {
-            System.out.println(adjacent.toString());
-            throw new Exception("COUNTER CLOCKWISE!");
-        }*/
+*/
 
-
+        //triangles.add(new Triangle(t.getA(), t.getB(), t.getC()));
+        //triangles.add(new Triangle(adjacent.getA(), adjacent.getB(), adjacent.getC()));
 
         rTree = rTree.add(t, t.getBounds());
         rTree = rTree.add(adjacent, adjacent.getBounds());
+
+
+
     }
 
     private static boolean isIllegal(Triangle t1, Point D) throws Exception{

@@ -51,16 +51,6 @@ public class Triangle {
         return connected;
     }
 
-    public Point getNot(Point not1, Point not2) {
-        if(!A.equals(not1) && !A.equals(not2))
-            return A;
-        if(!B.equals(not1) && !B.equals(not2))
-            return B;
-        if(!C.equals(not1) && !C.equals(not2))
-            return C;
-        return null;
-    }
-
     public com.github.davidmoten.rtree2.geometry.Rectangle getBounds() {
         return Geometries.rectangle(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
         //return Geometries.point(bounds.getCenterX(), bounds.getCenterY());
