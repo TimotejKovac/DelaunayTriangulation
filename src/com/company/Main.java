@@ -24,6 +24,9 @@ public class Main {
     static RTree<Triangle, Geometry> rTree;
     static LASReader reader;
 
+    static float offsetX ;
+    static float offsetY;
+
     public static void main(String[] args) throws Exception {
 	    // write your code here
 
@@ -34,6 +37,7 @@ public class Main {
         //reader = new LASReader(new File("GK_391_145.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
+
         rTree = rTree.add(startingTriangle, startingTriangle.getBounds());
         //triangles.add(new Triangle(startingTriangle.getA(), startingTriangle.getB(), startingTriangle.getC()));
 
@@ -70,11 +74,11 @@ public class Main {
                 //if(count % 1000 == 0) {
                     System.out.println(percent + " %");
                 //}
-                /*if (count > 100000) {
+                if (percent > 10) {
                     //rTree.visualize(600, 600)
                       //      .save("mytree.png");
                     break;
-                }*/
+                }
             }
         //}
 
@@ -93,15 +97,21 @@ public class Main {
                 }
                 saving.add(triangle);
             }
+            rTree = null;
 
 
+            HashMap<Point, Integer> indices = new HashMap<>();
+
+            ArrayList<Integer> faces = new ArrayList<>();
+
+            int i = 1;
             for (Triangle triangle : saving) {
-                writer.write("v " + triangle.getA().x + " " + triangle.getA().y + " " + triangle.getA().z + "\n");
-                writer.write("v " + triangle.getB().x + " " + triangle.getB().y + " " + triangle.getB().z + "\n");
-                writer.write("v " + triangle.getC().x + " " + triangle.getC().y + " " + triangle.getC().z  + "\n");
+                i = handle(writer, indices, faces, triangle.getA(), i);
+                i = handle(writer, indices, faces, triangle.getB(), i);
+                i = handle(writer, indices, faces, triangle.getC(), i);
             }
-            for(int i = 1; i < saving.size() * 3; i+=3) {
-                writer.write("f " + i + " " + (i + 1) + " " + (i + 2) + "\n");
+            for(i = 0; i < faces.size(); i+=3) {
+                writer.write("f " + faces.get(i) + " " + faces.get(i + 1) + " " + faces.get(i + 2) + "\n");
             }
         }
         catch (Exception e) {
@@ -111,10 +121,24 @@ public class Main {
         //System.out.println("Done " + triangles.size());
     }
 
+    static int handle(Writer writer, HashMap<Point, Integer> indices, ArrayList<Integer> faces, Point P, int i) throws Exception {
+        if(!indices.containsKey(P)) {
+            writer.write("v " + P.x + " " + P.y + " " + P.z + "\n");
+            indices.put(P, i);
+            faces.add(i);
+            i++;
+        }
+        else {
+            int index = indices.get(P);
+            faces.add(index);
+        }
+        return i;
+    }
+
     static HashSet<Triangle> triangles = new HashSet<>();
 
     private static void getTriangle(Point P) throws Exception {
-        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(P.x, P.y)));
+        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(P.x - offsetX, P.y - offsetY)));
         //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.point(P.x, P.y),1,10));
         //System.out.println("entries = " + entries.size());
         boolean t1Added = false, t2Added = false, t3Added = false;
@@ -189,13 +213,15 @@ public class Main {
         result.set(new Point((int)(rectangle.getCenterX() - rectangle.getWidth()), (int)(rectangle.getY()), 0),
                 new Point((int)(rectangle.getCenterX() + rectangle.getWidth()), (int)(rectangle.getY()), 0),
                 new Point((int)rectangle.getCenterX(), (int)(rectangle.getY() + 2 * rectangle.getHeight()),0));
-
+        com.github.davidmoten.rtree2.geometry.Rectangle bounds = result.getBounds();
+        offsetX = (float) bounds.x1();
+        offsetY = (float) bounds.y1();
         return result;
     }
 
 
     private static Triangle getAdjacent(Point p1, Point p2, Point not) {
-        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x, p2.y)));
+        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x - offsetX, p2.y - offsetY)));
         for(Entry<Triangle, Geometry> entry : entries) {
             Triangle triangle = entry.value();
             if(triangle.contains(p1) && triangle.contains(p2) && !triangle.contains(not))

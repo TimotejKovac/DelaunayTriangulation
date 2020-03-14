@@ -50,7 +50,10 @@ public class Triangle {
 
     public com.github.davidmoten.rtree2.geometry.Rectangle getBounds() {
         Rectangle bounds = polygon.getBounds();
-        return Geometries.rectangle(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
+        return Geometries.rectangle(bounds.x - Main.offsetX,
+                bounds.y - Main.offsetY,
+                bounds.x - Main.offsetX + bounds.width,
+                bounds.y - Main.offsetY + bounds.height);
         //return Geometries.point(bounds.getCenterX(), bounds.getCenterY());
     }
 
