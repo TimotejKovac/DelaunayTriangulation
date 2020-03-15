@@ -27,13 +27,13 @@ public class Main {
     static float offsetX ;
     static float offsetY;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 	    // write your code here
 
 
         rTree = RTree.star().create();
         //reader = new LASReader(new File("GK_374_129.laz"));
-        reader = new LASReader(new File("GK_430_136.laz"));
+        reader = new LASReader(new File("GK_430_135.laz"));
         //reader = new LASReader(new File("GK_391_145.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
@@ -50,38 +50,48 @@ public class Main {
         for(LASPoint lasPoint : reader.getPoints()) {
             realPoints.add(new Point(lasPoint.getX(), lasPoint.getY(), lasPoint.getZ()));
         }
+        Collections.shuffle(realPoints);
+
+        System.out.println("REAL POINTS = " + realPoints.size());
+
 
         Random random = new Random();
 
-        while (realPoints.size() > 0) {
+        long start = System.currentTimeMillis();
+
+
+        for (Point P : realPoints) {
+        //for(Point P : realPoints.iterator().) {
         //for (LASPoint lasPoint : reader.getPoints()) {
                 //for(Point point : points) {
                 //Point P = new Point(point.x, point.y, point.z);
-          /*      Point P = new Point(lasPoint.getX(),
+               /*Point P = new Point(lasPoint.getX(),
                         lasPoint.getY(),
                         lasPoint.getZ());*/
-                Point P = realPoints.remove(random.nextInt(realPoints.size()));
+                //Point P = realPoints.remove(random.nextInt(realPoints.size()));
 
             //System.out.println("P = " + P.toString());
 
             //System.out.println("triangle = " + triangle);
+                //Point P = realPoints.remove(0);
                 getTriangle(P);
 
                 /*if(count > 10)
                     break;
 */
                 float percent = (count++ / (float) size) * 100;
-                //if(count % 1000 == 0) {
+                if(count % 1000 == 0) {
                     System.out.println(percent + " %");
-                //}
-                if (percent > 10) {
+                }
+                /*if (percent > 1) {
                     //rTree.visualize(600, 600)
                       //      .save("mytree.png");
+                    System.out.println("COUNT = " + count);
                     break;
-                }
+                }*/
             }
         //}
-
+        System.err.println("TIME TAKEN = " + (System.currentTimeMillis() - start));
 
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream("test.obj"), StandardCharsets.UTF_8))) {
@@ -98,6 +108,9 @@ public class Main {
                 saving.add(triangle);
             }
             rTree = null;
+
+
+            System.out.println("Saving size = " + saving.size());
 
 
             HashMap<Point, Integer> indices = new HashMap<>();
@@ -137,10 +150,11 @@ public class Main {
 
     static HashSet<Triangle> triangles = new HashSet<>();
 
-    private static void getTriangle(Point P) throws Exception {
+    private static void getTriangle(Point P) {
         List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(P.x - offsetX, P.y - offsetY)));
         //List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.nearest(Geometries.point(P.x, P.y),1,10));
         //System.out.println("entries = " + entries.size());
+        long timeStart = System.currentTimeMillis();
         boolean t1Added = false, t2Added = false, t3Added = false;
         for(Entry<Triangle, Geometry> entry : entries) {
 
@@ -153,6 +167,9 @@ public class Main {
             if (!triangle.has(P)) {
                 continue;
             }
+
+            //System.out.println("getTriangle: time taken = " + (System.currentTimeMillis() - timeStart));
+
 
             int result = 0;
             Triangle t1 = new Triangle();
@@ -182,6 +199,7 @@ public class Main {
             }
 
             rTree = rTree.delete(triangle, triangle.getBounds());
+
             //triangles.remove(new Triangle(triangle.getA(), triangle.getB(), triangle.getC()));
 
             if(t1Added)
@@ -221,16 +239,21 @@ public class Main {
 
 
     private static Triangle getAdjacent(Point p1, Point p2, Point not) {
+        long timeStart = System.currentTimeMillis();
+
         List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x - offsetX, p2.y - offsetY)));
+        //System.out.println("entries = " + entries.size());
         for(Entry<Triangle, Geometry> entry : entries) {
             Triangle triangle = entry.value();
-            if(triangle.contains(p1) && triangle.contains(p2) && !triangle.contains(not))
+            if(triangle.contains(p1) && triangle.contains(p2) && !triangle.contains(not)) {
+                //System.out.println("getAdjecent: time taken = " + (System.currentTimeMillis() - timeStart));
                 return triangle;
+            }
         }
         return null;
     }
 
-    private static void legalizeEdge(Point P, Point Pi, Point Pj, Triangle t) throws Exception {
+    private static void legalizeEdge(Point P, Point Pi, Point Pj, Triangle t) {
 
         Triangle adjacent = getAdjacent(Pi, Pj, P);
         if(adjacent == null) {
@@ -270,7 +293,7 @@ public class Main {
         return (val > 0)? 1: 2;
     }
 
-    private static void change(Triangle adjacent, Triangle t, Point  P, Point Pi, Point Pj, Point Pl) throws Exception {
+    private static void change(Triangle adjacent, Triangle t, Point  P, Point Pi, Point Pj, Point Pl) {
 
         //triangles.remove(new Triangle(t.getA(), t.getB(), t.getC()));
         //triangles.remove(new Triangle(adjacent.getA(), adjacent.getB(), adjacent.getC()));
@@ -296,7 +319,7 @@ public class Main {
 
     }
 
-    private static boolean isIllegal(Triangle t1, Point D) throws Exception{
+    private static boolean isIllegal(Triangle t1, Point D) {
         //System.out.println("t1 = " + t1.toString() + ", t2 = " + t2.toString());
         Point A = t1.getA();
         Point B = t1.getB();

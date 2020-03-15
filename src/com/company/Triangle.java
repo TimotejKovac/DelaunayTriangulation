@@ -13,7 +13,6 @@ import static com.company.Main.orientation;
 
 public class Triangle {
     private Point A, B, C;
-    Path2D.Float polygon;
 
     public Triangle() {}
 
@@ -49,7 +48,7 @@ public class Triangle {
     }
 
     public com.github.davidmoten.rtree2.geometry.Rectangle getBounds() {
-        Rectangle bounds = polygon.getBounds();
+        Rectangle bounds = getPolygon().getBounds();
         return Geometries.rectangle(bounds.x - Main.offsetX,
                 bounds.y - Main.offsetY,
                 bounds.x - Main.offsetX + bounds.width,
@@ -57,8 +56,18 @@ public class Triangle {
         //return Geometries.point(bounds.getCenterX(), bounds.getCenterY());
     }
 
+    private Path2D.Float getPolygon() {
+        Path2D.Float polygon = new Path2D.Float();
+        polygon.moveTo(A.x, A.y);
+        polygon.lineTo(B.x, B.y);
+        polygon.lineTo(C.x, C.y);
+        polygon.lineTo(A.x, A.y);
+        polygon.closePath();
+        return polygon;
+    }
+
     public boolean has(Point P) {
-        return polygon.contains(P.x, P.y);
+        return getPolygon().contains(P.x, P.y);
     }
 
     public int set(Point A, Point B, Point C) {
@@ -77,12 +86,7 @@ public class Triangle {
         this.B = B;
         this.C = C;
 
-        polygon = new Path2D.Float();
-        polygon.moveTo(A.x, A.y);
-        polygon.lineTo(B.x, B.y);
-        polygon.lineTo(C.x, C.y);
-        polygon.lineTo(A.x, A.y);
-        polygon.closePath();
+
 
         return 0;
     }
