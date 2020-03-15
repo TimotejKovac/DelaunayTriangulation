@@ -1,7 +1,5 @@
 package com.company;
 
-
-
 import com.github.davidmoten.rtree2.geometry.Geometries;
 
 import java.awt.*;
@@ -15,13 +13,6 @@ public class Triangle {
     private Point A, B, C;
 
     public Triangle() {}
-
-    public Triangle(Point A, Point B, Point C) {
-        this.A = new Point(A);
-        this.B = new Point(B);
-        this.C = new Point(C);
-    }
-
 
     public Point notIn(Triangle t1) {
         if(!t1.contains(A))
@@ -53,7 +44,6 @@ public class Triangle {
                 bounds.y - Main.offsetY,
                 bounds.x - Main.offsetX + bounds.width,
                 bounds.y - Main.offsetY + bounds.height);
-        //return Geometries.point(bounds.getCenterX(), bounds.getCenterY());
     }
 
     private Path2D.Float getPolygon() {
@@ -85,8 +75,6 @@ public class Triangle {
         this.A = A;
         this.B = B;
         this.C = C;
-
-
 
         return 0;
     }
