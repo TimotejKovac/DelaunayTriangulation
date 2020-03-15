@@ -27,7 +27,10 @@ public class Main {
 
     public static void main(String[] args) {
 
+        // Use RTree for improved performance of searching already established triangles.
         rTree = RTree.star().create();
+
+        // Time needed for Delaunay triangulation of file GK_430_136.laz which contained 12M points was 40 minutes on Intel i7 6700K.
         reader = new LASReader(new File("GK_430_135.laz"));
 
         Triangle startingTriangle = getStartingTriangle();
@@ -49,6 +52,7 @@ public class Main {
             handlePoint(P);
 
             float percent = (count++ / (float) size) * 100;
+
             if(count % 1000 == 0) {
                 System.out.println(percent + " %");
             }
@@ -93,6 +97,7 @@ public class Main {
     }
 
     static int handle(Writer writer, HashMap<Point, Integer> indices, ArrayList<Integer> faces, Point P, int i) throws Exception {
+        // Check if this vertex has already been written and just reference that index. Else write it in the file.
         if(!indices.containsKey(P)) {
             writer.write("v " + P.x + " " + P.y + " " + P.z + "\n");
             indices.put(P, i);
@@ -113,9 +118,11 @@ public class Main {
 
             Triangle triangle = entry.value();
 
+            // If this dot with it's x and y is already part of the triangle this point is a duplicate and will not be added.
             if(triangle.contains(P))
                 return;
 
+            // If the triangle does not contain the point continue with the search.
             if (!triangle.has(P)) {
                 continue;
             }
@@ -144,8 +151,10 @@ public class Main {
 
             }
 
+            // Delete the parent
             rTree = rTree.delete(triangle, triangle.getBounds());
 
+            // Legalize adjacent edges of all the added triangles.
             if(t1Added)
                 legalizeEdge(P, triangle.getA(), triangle.getB(), t1);
             if(t2Added)
@@ -167,6 +176,7 @@ public class Main {
                 width,
                 height);
 
+        // The largest triangle is computed as being twice the width and twice the height of the bounding box of the area of points.
         Triangle result = new Triangle();
         result.set(new Point((int)(rectangle.getCenterX() - rectangle.getWidth()), (int)(rectangle.getY()), 0),
                 new Point((int)(rectangle.getCenterX() + rectangle.getWidth()), (int)(rectangle.getY()), 0),
@@ -203,6 +213,7 @@ public class Main {
             ArrayList<Point> connected = adjacent.getConnected(t);
             connected.remove(P);
             Pl = connected.get(0);
+            // This might not be needed but because "recursion" I added it anyway.
             connected = null;
 
             legalizeEdge(P, Pi, Pl, t);
@@ -230,12 +241,15 @@ public class Main {
     }
 
     private static void change(Triangle adjacent, Triangle t, Point  P, Point Pi, Point Pj, Point Pl) {
+        // Remove both triangles from the tree
         rTree = rTree.delete(t, t.getBounds());
         rTree = rTree.delete(adjacent, adjacent.getBounds());
 
+        // Change connected points
         t.set(Pl, Pi, P);
         adjacent.set(Pl, Pj, P);
 
+        // Add them back into the tree
         rTree = rTree.add(t, t.getBounds());
         rTree = rTree.add(adjacent, adjacent.getBounds());
     }
@@ -245,6 +259,7 @@ public class Main {
         Point B = t1.getB();
         Point C = t1.getC();
 
+        // If the determinant of this matrix is positive the edge is illegal.
         double[][] matrixData = {
                 {A.x - D.x, A.y - D.y, Math.pow(A.x - D.x, 2) + Math.pow(A.y - D.y, 2)},
                 {B.x - D.x, B.y - D.y, Math.pow(B.x - D.x, 2) + Math.pow(B.y - D.y, 2)},
