@@ -30,7 +30,7 @@ public class Main {
         // Randomize the points to give the R-tree a more scattered data.
         ArrayList<Point> realPoints = new ArrayList<>();
         try {
-            File myObj = new File("Points.txt");
+            File myObj = new File("PointsB.txt");
             Scanner myReader = new Scanner(myObj);
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
