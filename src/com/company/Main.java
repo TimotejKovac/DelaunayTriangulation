@@ -5,13 +5,10 @@ import com.github.davidmoten.rtree2.Iterables;
 import com.github.davidmoten.rtree2.RTree;
 import com.github.davidmoten.rtree2.geometry.Geometries;
 import com.github.davidmoten.rtree2.geometry.Geometry;
-import com.github.mreutegg.laszip4j.LASPoint;
-import com.github.mreutegg.laszip4j.LASReader;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -20,42 +17,38 @@ import java.util.List;
 public class Main {
 
     static RTree<Triangle, Geometry> rTree;
-    static LASReader reader;
-
-    static float offsetX ;
-    static float offsetY;
+    static int flipCount = 0, changeCount = 0;
 
     public static void main(String[] args) {
 
         // Use RTree for improved performance of searching already established triangles.
         rTree = RTree.star().create();
 
-        // Time needed for Delaunay triangulation of file GK_430_136.laz which contained 12M points was 40 minutes on Intel i7 6700K.
-        reader = new LASReader(new File("GK_430_135.laz"));
-
         Triangle startingTriangle = getStartingTriangle();
         rTree = rTree.add(startingTriangle, startingTriangle.getBounds());
 
-        int size = reader.getHeader().getLegacyNumberOfPointRecords();
-        int count = 0;
-
         // Randomize the points to give the R-tree a more scattered data.
         ArrayList<Point> realPoints = new ArrayList<>();
-        for(LASPoint lasPoint : reader.getPoints()) {
-            realPoints.add(new Point(lasPoint.getX(), lasPoint.getY(), lasPoint.getZ()));
+        try {
+            File myObj = new File("Points.txt");
+            Scanner myReader = new Scanner(myObj);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                String[] components = data.split(" ");
+                realPoints.add(new Point(Float.parseFloat(components[0]), Float.parseFloat(components[1]), 0f));
+            }
+            System.out.println("Points = " + realPoints.size());
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
         }
-        Collections.shuffle(realPoints);
+        //Collections.shuffle(realPoints);
 
         long start = System.currentTimeMillis();
 
         for (Point P : realPoints) {
             handlePoint(P);
-
-            float percent = (count++ / (float) size) * 100;
-
-            if(count % 1000 == 0) {
-                System.out.println(percent + " %");
-            }
         }
 
         System.out.println("TIME TAKEN = " + (System.currentTimeMillis() - start));
@@ -90,6 +83,8 @@ public class Main {
             for(i = 0; i < faces.size(); i+=3) {
                 writer.write("f " + faces.get(i) + " " + faces.get(i + 1) + " " + faces.get(i + 2) + "\n");
             }
+
+            System.out.println("FLIPS = " + flipCount + ", CHANGES = " + changeCount);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -110,9 +105,10 @@ public class Main {
         }
         return i;
     }
-    
+
     private static void handlePoint(Point P) {
-        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(P.x - offsetX, P.y - offsetY)));
+        System.out.println("---------------");
+        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(P.x, P.y)));
         boolean t1Added = false, t2Added = false, t3Added = false;
         for(Entry<Triangle, Geometry> entry : entries) {
 
@@ -167,29 +163,17 @@ public class Main {
     }
 
     private static Triangle getStartingTriangle() {
-        double width = ((reader.getHeader().getMaxX() - reader.getHeader().getMinX())) * (1 / reader.getHeader().getXScaleFactor());
-        double height = ((reader.getHeader().getMaxY() - reader.getHeader().getMinY()) * (1 / reader.getHeader().getYScaleFactor()));
-
-        Rectangle rectangle = new Rectangle();
-        rectangle.setRect(reader.getHeader().getMinX() * (1 / reader.getHeader().getXScaleFactor()),
-                (reader.getHeader().getMinY() * (1 / reader.getHeader().getYScaleFactor())),
-                width,
-                height);
-
         // The largest triangle is computed as being twice the width and twice the height of the bounding box of the area of points.
         Triangle result = new Triangle();
-        result.set(new Point((int)(rectangle.getCenterX() - rectangle.getWidth()), (int)(rectangle.getY()), 0),
-                new Point((int)(rectangle.getCenterX() + rectangle.getWidth()), (int)(rectangle.getY()), 0),
-                new Point((int)rectangle.getCenterX(), (int)(rectangle.getY() + 2 * rectangle.getHeight()),0));
-        com.github.davidmoten.rtree2.geometry.Rectangle bounds = result.getBounds();
-        offsetX = (float) bounds.x1();
-        offsetY = (float) bounds.y1();
+        result.set(new Point(140, -500, 0),
+                new Point(-800, 900, 0),
+                new Point(1200, 900,0));
         return result;
     }
 
 
     private static Triangle getAdjacent(Point p1, Point p2, Point not) {
-        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x - offsetX, p2.y - offsetY)));
+        List<Entry<Triangle, Geometry>> entries = Iterables.toList(rTree.search(Geometries.point(p2.x, p2.y)));
         for(Entry<Triangle, Geometry> entry : entries) {
             Triangle triangle = entry.value();
             if(triangle.contains(p1) && triangle.contains(p2) && !triangle.contains(not)) {
@@ -200,6 +184,7 @@ public class Main {
     }
 
     private static void legalizeEdge(Point P, Point Pi, Point Pj, Triangle t) {
+        changeCount++;
 
         Triangle adjacent = getAdjacent(Pi, Pj, P);
         if(adjacent == null) {
@@ -208,13 +193,13 @@ public class Main {
 
         Point Pl = adjacent.notIn(t);
         if(isIllegal(t, Pl)) {
+            flipCount++;
+
             change(adjacent, t, P, Pi, Pj, Pl);
 
             ArrayList<Point> connected = adjacent.getConnected(t);
             connected.remove(P);
             Pl = connected.get(0);
-            // This might not be needed but because "recursion" I added it anyway.
-            connected = null;
 
             legalizeEdge(P, Pi, Pl, t);
             legalizeEdge(P, Pl, Pj, adjacent);
